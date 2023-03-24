@@ -445,6 +445,10 @@ public:
   kj::Maybe<kj::Date> getWebSocketAutoResponseTimestamp(jsg::Ref<WebSocket> ws);
   // Get the last auto response timestamp or null
 
+  void setEventTimeout(kj::Maybe<int> timeoutMs);
+  kj::Maybe<int> getEventTimeout();
+  // Sets or gets the timeout for hibernatable websockets
+
   JSG_RESOURCE_TYPE(DurableObjectState, CompatibilityFlags::Reader flags) {
     JSG_METHOD(waitUntil);
     JSG_READONLY_INSTANCE_PROPERTY(id, getId);
@@ -455,6 +459,8 @@ public:
     JSG_METHOD(setWebSocketAutoResponse);
     JSG_METHOD(getWebSocketAutoResponse);
     JSG_METHOD(getWebSocketAutoResponseTimestamp);
+    JSG_METHOD(setEventTimeout);
+    JSG_METHOD(getEventTimeout);
 
     if (flags.getWorkerdExperimental()) {
       // TODO(someday): This currently exists for testing purposes only but maybe it could be

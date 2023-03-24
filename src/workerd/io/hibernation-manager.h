@@ -47,6 +47,12 @@ public:
 
   friend class api::HibernatableWebSocketEvent;
 
+  void setEventTimeout(kj::Maybe<int> timeoutMs) override;
+  // Sets the maximum time in Ms that an event can run for. If the timeout is reached, event is canceled.
+
+  kj::Maybe<int> getEventTimeout() override;
+  // Gets the event timeout.
+
 private:
   class HibernatableWebSocket;
   struct TagListItem {
@@ -211,5 +217,6 @@ private:
   kj::TaskSet readLoopTasks;
   kj::Maybe<jsg::Ref<api::WebSocketRequestResponsePair>> autoResponsePair;
   kj::Maybe<TimerChannel&> timer;
+  kj::Maybe<int> eventTimeoutMs;
 };
 }; // namespace workerd

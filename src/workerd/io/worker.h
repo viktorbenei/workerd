@@ -689,6 +689,8 @@ public:
     virtual void unsetWebSocketAutoResponse() = 0;
     virtual kj::Maybe<jsg::Ref<api::WebSocketRequestResponsePair>> getWebSocketAutoResponse() = 0;
     virtual void setTimerChannel(TimerChannel& timerChannel) = 0;
+    virtual void setEventTimeout(kj::Maybe<int> timeoutMs) = 0;
+    virtual kj::Maybe<int> getEventTimeout() = 0;
   };
 
   Actor(const Worker& worker, kj::Maybe<RequestTracker&> tracker, Id actorId,
