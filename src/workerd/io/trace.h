@@ -125,6 +125,26 @@ public:
     void copyTo(rpc::Trace::EmailEventInfo::Builder builder);
   };
 
+  class HibernatableWebSocketEventInfo {
+  public:
+    struct Message{};
+    struct Close {
+      uint16_t code;
+      bool wasClean;
+    };
+    struct Error{};
+
+    using Type = kj::OneOf<Message, Close, Error>;
+
+    explicit HibernatableWebSocketEventInfo(Type type);
+    HibernatableWebSocketEventInfo(rpc::Trace::HibernatableWebSocketEventInfo::Reader reader);
+
+    Type type;
+
+    void copyTo(rpc::Trace::HibernatableWebSocketEventInfo::Builder builder);
+    static Type readFrom(rpc::Trace::HibernatableWebSocketEventInfo::Reader reader);
+  };
+
   class CustomEventInfo {
   public:
     explicit CustomEventInfo() {};
@@ -201,7 +221,7 @@ public:
   // We treat the origin value as "unset".
 
   typedef kj::OneOf<FetchEventInfo, ScheduledEventInfo, AlarmEventInfo, QueueEventInfo,
-          EmailEventInfo, CustomEventInfo> EventInfo;
+          EmailEventInfo, HibernatableWebSocketEventInfo, CustomEventInfo> EventInfo;
   kj::Maybe<EventInfo> eventInfo;
   // TODO(someday): Support more event types.
   // TODO(someday): Work out what sort of information we may want to convey about the parent

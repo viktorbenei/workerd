@@ -50,6 +50,7 @@ struct Trace @0x8e8d911203762d34 {
     queue @15 :QueueEventInfo;
     custom @13 :CustomEventInfo;
     email @16 :EmailEventInfo;
+    hibernatableWebSocket @18 :HibernatableWebSocketEventInfo;
   }
   struct FetchEventInfo {
     method @0 :HttpMethod;
@@ -81,6 +82,17 @@ struct Trace @0x8e8d911203762d34 {
     mailFrom @0 :Text;
     rcptTo @1 :Text;
     rawSize @2 :UInt32;
+  }
+
+  struct HibernatableWebSocketEventInfo {
+    type :union {
+      message @0 :Void;
+      close :group {
+        code @1 :UInt16;
+        wasClean @2 :Bool;
+      }
+      error @3 :Void;
+    }
   }
 
   struct CustomEventInfo {}
