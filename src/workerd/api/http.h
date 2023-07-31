@@ -471,9 +471,19 @@ public:
   jsg::Promise<QueueResponse> queue(
       jsg::Lock& js, kj::String queueName, kj::Array<ServiceBindingQueueMessage> messages);
 
+  jsg::Promise<void> startRpcSession(jsg::Lock& js);
+  // TODO(now): This is just a tester for starting an rpc session.
+  // Sets rpcCap with a capability pointing to the destination Worker.
+
+  jsg::Promise<bool> pingRemoteOverRPC(jsg::Lock& js);
+  // TODO(now): Delete
+  // Simple ping test to ensure our RPC session is established.
+
   JSG_RESOURCE_TYPE(Fetcher, CompatibilityFlags::Reader flags) {
     JSG_METHOD(fetch);
     JSG_METHOD(connect);
+    JSG_METHOD(startRpcSession);
+    JSG_METHOD(pingRemoteOverRPC);
 
     if (flags.getServiceBindingExtraHandlers()) {
       JSG_METHOD(queue);
@@ -496,6 +506,9 @@ private:
   kj::OneOf<uint, kj::Own<CrossContextOutgoingFactory>, IoOwn<OutgoingFactory>> channelOrClientFactory;
   RequiresHostAndProtocol requiresHost;
   bool isInHouse;
+  kj::Maybe<rpc::JsRpcTarget::Client> rpcCap = nullptr;
+  // TODO(now): We probably want this on the DO stub?
+  // Capability for RPC method calls to remote DO.
 };
 
 struct RequestInitializerDict {

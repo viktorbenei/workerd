@@ -7,6 +7,7 @@
 #include "system-streams.h"
 #include "util.h"
 #include "queue.h"
+#include "workerd/api/js-rpc-session.h"
 #include <kj/encoding.h>
 #include <kj/compat/url.h>
 #include <kj/memory.h>
@@ -2046,6 +2047,40 @@ jsg::Promise<QueueResponse> Fetcher::queue(
         .explicitAcks=event->getExplicitAcks(),
     };
   });
+}
+
+jsg::Promise<void> Fetcher::startRpcSession(jsg::Lock& js) {
+  auto& ioContext = IoContext::current();
+  // TODO(now): Just a reminder for the future, rename this operation name.
+  auto worker = getClient(ioContext, nullptr, "rpcTest"_kjc);
+
+  auto event = kj::refcounted<api::JsRpcSessionCustomEventImpl>(9);
+
+  auto eventRef = kj::addRef(*event);
+  return ioContext.awaitIo(js, worker->customEvent(kj::mv(eventRef)).attach(kj::mv(worker)),
+      [this, event=kj::mv(event)](jsg::Lock& js, WorkerInterface::CustomEvent::Result result) mutable {
+    // We read the rpc capability off the event to get around customEvent's return type limitation.
+    rpcCap = kj::mv(KJ_REQUIRE_NONNULL(event->clientCap));
+    event->clientCap = nullptr;
+  });
+}
+
+jsg::Promise<bool> Fetcher::pingRemoteOverRPC(jsg::Lock& js) {
+  auto& ioContext = IoContext::current();
+  KJ_IF_MAYBE(cap, rpcCap) {
+    auto builder = cap->callRequest();
+    builder.setMethodName(kj::str("SomeMethod"));
+    builder.initSerializedArgs().initV8Serialized(0);
+    return ioContext.awaitIo(js, builder.send().then(
+          [](capnp::Response<rpc::JsRpcTarget::CallResults> result){
+      auto value = result.getResult().getV8Serialized();
+      KJ_DBG("From remote: ", value.asChars());
+      return true;
+    }));
+  }
+  // We don't have a capability so we haven't established a connection to the remote!
+  kj::Promise<bool> failurePromise = false;
+  return ioContext.awaitIo(js, kj::mv(failurePromise));
 }
 
 kj::Own<WorkerInterface> Fetcher::getClient(
