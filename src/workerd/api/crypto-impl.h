@@ -159,6 +159,7 @@ public:
   }
 
   virtual kj::Array<kj::byte> deriveBits(
+      jsg::Lock& js,
       SubtleCrypto::DeriveKeyAlgorithm&& algorithm, kj::Maybe<uint32_t> length) const {
     JSG_FAIL_REQUIRE(DOMNotSupportedError,
         "The deriveKey and deriveBits operations are not implemented for \"",
@@ -211,7 +212,7 @@ public:
 
   // JS API implementation
 
-  virtual AlgorithmVariant getAlgorithm() const = 0;
+  virtual AlgorithmVariant getAlgorithm(jsg::Lock& js) const = 0;
   virtual kj::StringPtr getType() const { return "secret"_kj; }
 
   virtual bool equals(const Impl& other) const = 0;

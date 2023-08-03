@@ -6,6 +6,8 @@
 // WebCrypto API
 
 #include <bit>
+#include <workerd/io/features.h>
+#include <workerd/jsg/buffersource.h>
 #include <workerd/jsg/jsg.h>
 #include <openssl/err.h>
 #include "streams.h"
@@ -158,14 +160,33 @@ public:
     uint16_t modulusLength;
     // The length, in bits, of the RSA modulus. The spec would have this be an unsigned long.
 
-    BigInteger publicExponent;
+    kj::OneOf<BigInteger, jsg::BufferSource> publicExponent;
     // The RSA public exponent (in unsigned big-endian form)
 
     jsg::Optional<KeyAlgorithm> hash;
     // The hash algorithm that is used with this key.
 
-    RsaKeyAlgorithm clone() const {
-      return { name, modulusLength, kj::heapArray(publicExponent.asPtr()), hash };
+    RsaKeyAlgorithm clone(jsg::Lock& js) const {
+      auto fixPublicExp = FeatureFlags::get(js).getCryptoPreservePublicExponent();
+      KJ_SWITCH_ONEOF(publicExponent) {
+        KJ_CASE_ONEOF(array, BigInteger) {
+          if (fixPublicExp) {
+            auto expCopy = kj::heapArray<kj::byte>(array.asPtr());
+            jsg::BackingStore expBack = jsg::BackingStore::from(kj::mv(expCopy));
+            return { name, modulusLength, jsg::BufferSource(js, kj::mv(expBack)), hash };
+          } else {
+            return { name, modulusLength, kj::heapArray(array.asPtr()), hash };
+          }
+        }
+        KJ_CASE_ONEOF(source, jsg::BufferSource) {
+          // Should only happen if the flag is enabled and an algorithm field is cloned twice.
+          KJ_ASSERT(fixPublicExp == true);
+          auto expCopy = kj::heapArray<kj::byte>(source.asArrayPtr());
+          jsg::BackingStore expBack = jsg::BackingStore::from(kj::mv(expCopy));
+          return { name, modulusLength, jsg::BufferSource(js, kj::mv(expBack)), hash };
+        }
+      }
+      KJ_UNREACHABLE;
     }
 
     JSG_STRUCT(name, modulusLength, publicExponent, hash);
@@ -228,7 +249,7 @@ public:
       KeyAlgorithm, AesKeyAlgorithm, HmacKeyAlgorithm, RsaKeyAlgorithm,
       EllipticKeyAlgorithm, ArbitraryKeyAlgorithm>;
 
-  AlgorithmVariant getAlgorithm() const;
+  AlgorithmVariant getAlgorithm(jsg::Lock& js) const;
   kj::StringPtr getType() const;
   bool getExtractable() const;
   kj::Array<kj::StringPtr> getUsages() const;

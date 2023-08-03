@@ -337,4 +337,12 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
       $compatEnableFlag("rtti_api")
       $experimental;
   # Enables the `workerd:rtti` module for querying runtime-type-information from JavaScript.
+
+  cryptoPreservePublicExponent @35 :Bool
+      $compatEnableFlag("crypto_preserve_public_exponent")
+      $compatDisableFlag("no_crypto_preserve_public_exponent")
+      $compatEnableDate("2023-11-01");
+  # In the WebCrypto API, the `publicExponent` field of the algorithm of RSA keys would previously
+  # be an ArrayBuffer. Using this flag, publicExponent is a Uint8Array as mandated by the
+  # specification.
 }
