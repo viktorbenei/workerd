@@ -15,7 +15,7 @@ namespace node {
 class CryptoImpl;
 }
 namespace {
-class EdDsaKeyBase;
+class EdDsaKey;
 class EllipticKey;
 }
 
@@ -259,7 +259,7 @@ private:
 
   friend class SubtleCrypto;
   friend class EllipticKey;
-  friend class EdDsaKeyBase;
+  friend class EdDsaKey;
   friend class node::CryptoImpl;
 };
 
