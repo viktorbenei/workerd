@@ -202,20 +202,22 @@ public:
     JSG_STRUCT(name, namedCurve);
   };
 
-  struct ArbitraryKeyAlgorithm {
+  //TODO: ArbitraryKeyAlgorithm – do we even need to have this exported? Do we even need it?
+  /*struct ArbitraryKeyAlgorithm {
     // Catch-all that can be used for extension algorithms. Combines fields of several known types.
     //
     // TODO(cleanup): Should we just replace AlgorithmVariant with this? Note we'd have to add
-    //   `pulicExponent` which is currently a problem because it makes the type non-copyable...
+    //   `publicExponent` which is currently a problem because it makes the type non-copyable...
     //   Alternatively, should we create some better way to abstract this?
 
     kj::StringPtr name;
+    // TODO: This should be jsg::Optional<kj::OneOf<KeyAlgorithm, kj::StringPtr> hash right?
     jsg::Optional<KeyAlgorithm> hash;
     jsg::Optional<kj::StringPtr> namedCurve;
     jsg::Optional<uint16_t> length;
 
     JSG_STRUCT(name, hash, namedCurve, length);
-  };
+  };*/
 
   struct AsymmetricKeyDetails {
     // Used as part of the Node.js crypto implementation of KeyObject.
@@ -225,6 +227,8 @@ public:
     jsg::Optional<kj::Array<kj::byte>> publicExponent;
     jsg::Optional<kj::String> hashAlgorithm;
     jsg::Optional<kj::String> mgf1HashAlgorithm;
+    // TODO: Why is this double? It's supposed to be a number on the JS level, but
+    // uint32_t/uint64_t would still work right?
     jsg::Optional<double> saltLength;
     jsg::Optional<uint32_t> divisorLength;
     jsg::Optional<kj::String> namedCurve;
@@ -247,7 +251,7 @@ public:
 
   using AlgorithmVariant = kj::OneOf<
       KeyAlgorithm, AesKeyAlgorithm, HmacKeyAlgorithm, RsaKeyAlgorithm,
-      EllipticKeyAlgorithm, ArbitraryKeyAlgorithm>;
+      EllipticKeyAlgorithm>;
 
   AlgorithmVariant getAlgorithm(jsg::Lock& js) const;
   kj::StringPtr getType() const;
@@ -726,7 +730,6 @@ private:
   api::CryptoKey::HmacKeyAlgorithm,                   \
   api::CryptoKey::RsaKeyAlgorithm,                    \
   api::CryptoKey::EllipticKeyAlgorithm,               \
-  api::CryptoKey::ArbitraryKeyAlgorithm,              \
   api::CryptoKey::AsymmetricKeyDetails,               \
   api::DigestStream
 
