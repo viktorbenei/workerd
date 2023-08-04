@@ -19,6 +19,7 @@
 #include <workerd/util/sentry.h>
 #include <workerd/util/thread-scopes.h>
 #include <workerd/api/hibernatable-web-socket.h>
+#include <workerd/api/actor-destroy.h>
 
 namespace workerd::api {
 
@@ -593,6 +594,17 @@ void ServiceWorkerGlobalScope::sendHibernatableWebSocketError(
       event->waitUntil(kj::mv(promise));
     }
     // We want to deliver an error, but if no webSocketError handler is exported, we shouldn't fail
+  }
+}
+
+void ServiceWorkerGlobalScope::actorDestroy(Worker::Lock& lock,
+      kj::Maybe<ExportedHandler&> exportedHandler) {
+  auto event = jsg::alloc<ActorDestroyEvent>();
+  KJ_IF_MAYBE(h, exportedHandler) {
+    KJ_IF_MAYBE(handler, h->destroy) {
+      auto promise = (*handler)(lock);
+      event->waitUntil(kj::mv(promise));
+    }
   }
 }
 

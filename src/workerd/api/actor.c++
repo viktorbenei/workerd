@@ -193,7 +193,8 @@ kj::Promise<void> DurableObjectNamespace::destroyImpl(jsg::Ref<DurableObjectId> 
   auto workerInterface = actorChannel->startRequest({});
   // We now have a worker interface to work with.
 
-  return kj::READY_NOW;
+  // TODO(now): Set correct eventTypeId for ActorDestroy events.
+  co_await workerInterface->customEvent(kj::heap<api::ActorDestroyCustomEventImpl>(10));
 }
 
 }  // namespace workerd::api
