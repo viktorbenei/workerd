@@ -170,6 +170,14 @@ public:
   jsg::Ref<DurableObjectNamespace> jurisdiction(kj::String jurisdiction);
   // Creates a subnamespace with the jurisdiction hardcoded.
 
+  kj::Promise<void> destroy(jsg::Ref<DurableObjectId> id);
+  // Destroys the durable object identified with id in this namespace including all data associated
+  // to it.
+
+  kj::Promise<void> destroyExisting(jsg::Ref<DurableObjectId> id);
+  // Destroys the durable object identified with id in this namespace including all data associated
+  // to it. This variation will get a durable object by ID if it already exists.
+
   JSG_RESOURCE_TYPE(DurableObjectNamespace, CompatibilityFlags::Reader flags) {
     JSG_METHOD(newUniqueId);
     JSG_METHOD(idFromName);
@@ -179,6 +187,13 @@ public:
       JSG_METHOD(getExisting);
     }
     JSG_METHOD(jurisdiction);
+    if (flags.getDurableObjectDestroy()){
+      if (flags.getDurableObjectGetExisting()) {
+        JSG_METHOD(destroyExisting);
+      } else {
+        JSG_METHOD(destroy);
+      }
+    }
 
     JSG_TS_ROOT();
     JSG_TS_OVERRIDE({
@@ -195,6 +210,8 @@ private:
       ActorGetMode mode,
       jsg::Ref<DurableObjectId> id,
       jsg::Optional<GetDurableObjectOptions> options);
+
+  kj::Promise<void> destroyImpl(jsg::Ref<DurableObjectId> id, ActorGetMode mode);
 };
 
 #define EW_ACTOR_ISOLATE_TYPES                      \

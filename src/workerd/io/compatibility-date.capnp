@@ -337,4 +337,9 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
       $compatEnableFlag("rtti_api")
       $experimental;
   # Enables the `workerd:rtti` module for querying runtime-type-information from JavaScript.
+
+  durableObjectDestroy @35 :Bool
+    $compatEnableFlag("durable_object_destroy")
+    $experimental;
+  # Enables namespace.destroy(id) durable object experimental API.
 }
