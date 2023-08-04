@@ -329,6 +329,24 @@ void Socket::handleProxyStatus(
   result.markAsHandled(js);
 }
 
+void Socket::handleProxyStatus(jsg::Lock& js, kj::Promise<kj::Maybe<kj::Exception>> connectResult) {
+  // It's kind of weird to take a promise that resolves to a Maybe<Exception> but we can't just use
+  // a Promise<void> and put our logic in the error handler because awaitIo's errorFunc isn't passed
+  // the jsg::Lock, which we need to have in the error case.
+  auto& context = IoContext::current();
+  auto result = context.awaitIo(js, kj::mv(connectResult),
+      [this, self = JSG_THIS](jsg::Lock& js, kj::Maybe<kj::Exception> result) -> void {
+    KJ_IF_MAYBE(e, result) {
+      auto exc = kj::Exception(kj::Exception::Type::FAILED, __FILE__, __LINE__,
+        kj::str(JSG_EXCEPTION(Error), "connection attempt failed"));
+      resolveFulfiller(js, exc);
+      readable->getController().cancel(js, nullptr).markAsHandled(js);
+      writable->getController().abort(js, nullptr).markAsHandled(js);
+    }
+  });
+  result.markAsHandled(js);
+}
+
 void Socket::handleReadableEof(jsg::Lock& js, jsg::Promise<void> onEof) {
   KJ_ASSERT(!getAllowHalfOpen(options));
   // Listen for EOF on the ReadableStream.
